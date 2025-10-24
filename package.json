@@ -1,0 +1,16 @@
+{
+    "name": "entity-benchmark",
+    "author": "Murka",
+    "description": "Simple game map on canvas with a bunch of entities",
+    "type": "module",
+    "private": true,
+    "scripts": {
+        "start": "bun run ./public/index.html --hot"
+    },
+    "devDependencies": {
+        "@types/bun": "latest"
+    },
+    "peerDependencies": {
+        "typescript": "^5"
+    }
+}
