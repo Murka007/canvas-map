@@ -2,10 +2,12 @@
     "name": "entity-benchmark",
     "author": "Murka",
     "description": "Simple game map on canvas with a bunch of entities",
-    "type": "module",
     "private": true,
+    "type": "module",
     "scripts": {
-        "start": "bun run ./public/index.html --hot"
+        "start": "bun run ./public/index.html --hot",
+        "build": "bun build ./public/index.html --outdir ./build --target browser --minify",
+        "deploy": "bunx gh-pages -d build"
     },
     "devDependencies": {
         "@types/bun": "latest"
