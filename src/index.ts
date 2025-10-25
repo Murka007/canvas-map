@@ -1,6 +1,6 @@
 import CircleManager from "./Circle";
 import config from "./config";
-import { lerp, PI2, random } from "./Math";
+import { getDistance, getMidpoint, lerp, PI2, random } from "./Math";
 
 const canvas = document.querySelector<HTMLCanvasElement>("canvas")!;
 const ctx = canvas.getContext("2d", { alpha: false })!;
@@ -43,6 +43,29 @@ const resize = () => {
 resize();
 window.addEventListener("resize", resize);
 
+const handleZoom = (factor: number, midX: number, midY: number) => {
+    zoom = Math.min(factor, 1);
+
+    const screen_w = canvas.width / scale;
+    const screen_h = canvas.height / scale;
+    const world_start = {
+        x: (midX / scale - screen_w / 2) + camera.x,
+        y: (midY / scale - screen_h / 2) + camera.y
+    } as const;
+
+    resize();
+
+    const nscreen_w = canvas.width / scale;
+    const nscreen_h = canvas.height / scale;
+    const world_end = {
+        x: (midX / scale - nscreen_w / 2) + camera.x,
+        y: (midY / scale - nscreen_h / 2) + camera.y
+    } as const;
+
+    camera.x += world_start.x - world_end.x;
+    camera.y += world_start.y - world_end.y;
+}
+
 window.addEventListener("wheel", event => {
     const factor = 1.15;
     if (event.deltaY < 0) {
@@ -51,28 +74,29 @@ window.addEventListener("wheel", event => {
         zoom /= factor;
     }
 
-    zoom = Math.min(zoom, 1);
     const rect = canvas.getBoundingClientRect();
     const mouse_x = (event.clientX - rect.left) * dpr;
     const mouse_y = (event.clientY - rect.top) * dpr;
+    handleZoom(zoom, mouse_x, mouse_y);
+    // zoom = Math.min(zoom, 1);
 
-    const screen_w = canvas.width / scale;
-    const screen_h = canvas.height / scale;
-    const world_start = {
-        x: (mouse_x / scale - screen_w / 2) + camera.x,
-        y: (mouse_y / scale - screen_h / 2) + camera.y
-    } as const;
+    // const screen_w = canvas.width / scale;
+    // const screen_h = canvas.height / scale;
+    // const world_start = {
+    //     x: (mouse_x / scale - screen_w / 2) + camera.x,
+    //     y: (mouse_y / scale - screen_h / 2) + camera.y
+    // } as const;
     
-    resize();
-    const nscreen_w = canvas.width / scale;
-    const nscreen_h = canvas.height / scale;
-    const world_end = {
-        x: (mouse_x / scale - nscreen_w / 2) + camera.x,
-        y: (mouse_y / scale - nscreen_h / 2) + camera.y
-    } as const;
+    // resize();
+    // const nscreen_w = canvas.width / scale;
+    // const nscreen_h = canvas.height / scale;
+    // const world_end = {
+    //     x: (mouse_x / scale - nscreen_w / 2) + camera.x,
+    //     y: (mouse_y / scale - nscreen_h / 2) + camera.y
+    // } as const;
 
-    camera.x += world_start.x - world_end.x;
-    camera.y += world_start.y - world_end.y;
+    // camera.x += world_start.x - world_end.x;
+    // camera.y += world_start.y - world_end.y;
 });
 
 canvas.addEventListener("mousedown", event => {
@@ -87,14 +111,66 @@ const draggingReset = () => {
 canvas.addEventListener("mouseup", draggingReset);
 canvas.addEventListener("mouseleave", draggingReset);
 
-canvas.addEventListener("mousemove", event => {
+const handleMove = (x: number, y: number) => {
     if (!mouse.dragging) return;
-    const diffX = (event.clientX - mouse.x) / scale * dpr;
-    const diffY = (event.clientY - mouse.y) / scale * dpr;
+    const diffX = (x - mouse.x) / scale * dpr;
+    const diffY = (y - mouse.y) / scale * dpr;
     camera.x -= diffX;
     camera.y -= diffY;
-    mouse.x = event.clientX;
-    mouse.y = event.clientY;
+    mouse.x = x;
+    mouse.y = y;
+}
+
+canvas.addEventListener("mousemove", event => {
+    handleMove(event.clientX, event.clientY);
+});
+
+let lastTouchDistance: number | null = null;
+
+canvas.addEventListener("touchstart", e => {
+    if (e.touches.length === 1) {
+        const touch = e.touches[0];
+        mouse.dragging = true;
+        mouse.x = touch.clientX;
+        mouse.y = touch.clientY;
+    } else if (e.touches.length === 2) {
+        lastTouchDistance = getDistance(e.touches[0], e.touches[1]);
+    }
+});
+
+canvas.addEventListener("touchmove", event => {
+    event.preventDefault();
+
+    if (event.touches.length === 1 && mouse.dragging) {
+        const touch = event.touches[0];
+        handleMove(touch.clientX, touch.clientY);
+    } else if (event.touches.length === 2) {
+        const dist = getDistance(event.touches[0], event.touches[1]);
+        const mid = getMidpoint(event.touches[0], event.touches[1]);
+        const rect = canvas.getBoundingClientRect();
+        const midX = (mid.x - rect.left) * dpr;
+        const midY = (mid.y - rect.top) * dpr;
+
+        if (lastTouchDistance) {
+            const factor = dist / lastTouchDistance;
+            handleZoom(zoom * factor, midX, midY);
+        }
+
+        lastTouchDistance = dist;
+    }
+}, { passive: false });
+
+canvas.addEventListener("touchend", e => {
+    if (e.touches.length < 2) lastTouchDistance = null;
+
+    if (e.touches.length === 1) {
+        const touch = e.touches[0];
+        mouse.x = touch.clientX;
+        mouse.y = touch.clientY;
+        mouse.dragging = true;
+    } else if (e.touches.length === 0) {
+        mouse.dragging = false;
+    }
 });
 
 const circleManager = CircleManager(5_000);
@@ -162,7 +238,6 @@ const render = () => {
     ctx.clearRect(0, 0, screenW, screenH);
     ctx.fillStyle = "#98b979";
     ctx.fillRect(0, 0, screenW, screenH);
-
 
     const viewX = camera.lx - screenW / 2;
     const viewY = camera.ly - screenH / 2;
