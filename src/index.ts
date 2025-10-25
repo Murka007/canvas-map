@@ -78,25 +78,6 @@ window.addEventListener("wheel", event => {
     const mouse_x = (event.clientX - rect.left) * dpr;
     const mouse_y = (event.clientY - rect.top) * dpr;
     handleZoom(zoom, mouse_x, mouse_y);
-    // zoom = Math.min(zoom, 1);
-
-    // const screen_w = canvas.width / scale;
-    // const screen_h = canvas.height / scale;
-    // const world_start = {
-    //     x: (mouse_x / scale - screen_w / 2) + camera.x,
-    //     y: (mouse_y / scale - screen_h / 2) + camera.y
-    // } as const;
-    
-    // resize();
-    // const nscreen_w = canvas.width / scale;
-    // const nscreen_h = canvas.height / scale;
-    // const world_end = {
-    //     x: (mouse_x / scale - nscreen_w / 2) + camera.x,
-    //     y: (mouse_y / scale - nscreen_h / 2) + camera.y
-    // } as const;
-
-    // camera.x += world_start.x - world_end.x;
-    // camera.y += world_start.y - world_end.y;
 });
 
 canvas.addEventListener("mousedown", event => {
@@ -163,6 +144,7 @@ canvas.addEventListener("touchmove", event => {
 canvas.addEventListener("touchend", e => {
     if (e.touches.length < 2) lastTouchDistance = null;
 
+    // important to resync to avoid "snapping"
     if (e.touches.length === 1) {
         const touch = e.touches[0];
         mouse.x = touch.clientX;
