@@ -13,5 +13,6 @@ PREVIEW: [Canvas Map](https://murka007.github.io/canvas-map/)
 - Smooth zooming on mouse `wheel`
 - Smooth camera movement
 - Simplicity of rendering
+- Mobile support
 
 **Enjoyed? Star a repo! 😄**

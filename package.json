@@ -10,7 +10,8 @@
         "deploy": "bunx gh-pages -d build"
     },
     "devDependencies": {
-        "@types/bun": "latest"
+        "@types/bun": "latest",
+        "gh-pages": "^6.3.0"
     },
     "peerDependencies": {
         "typescript": "^5"
